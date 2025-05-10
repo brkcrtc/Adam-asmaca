@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Önder Hoca'nın Matematik Adam Asmaca</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f5f5f5; text-align: center; padding: 20px; }
+    #hangman-img { max-width: 300px; transition: opacity 0.3s ease; }
+    #question { font-size: 1.2em; margin: 20px; }
+    #input-section { margin: 20px; }
+    input[type="number"] { width: 80px; padding: 5px; font-size: 1em; }
+    button { padding: 8px 16px; font-size: 1em; }
+    #status { margin: 10px; font-weight: bold; }
+    #message { font-size: 1.3em; margin: 20px; }
+  </style>
+</head>
+<body>
+  <h1>🎓 Önder Hoca'nın Matematik Adam Asmaca 🎓</h1>
+  <!-- Önder Hoca resmi hangman olarak kullanılıyor -->
+  <img id="hangman-img" src="onder.jpg" alt="Önder Hoca" style="opacity:0;" />
+  <div id="question"></div>
+  <div id="input-section">
+    <input id="answer" type="number" placeholder="Cevabın" />
+    <button id="submit-btn">Cevapla</button>
+  </div>
+  <div id="status"></div>
+  <div id="message"></div>
+
+  <script>
+    // Soru üreticileri
+    function makeArithQuestion() {
+      const ops = ['+', '-', '*', '/'];
+      const op = ops[Math.floor(Math.random() * ops.length)];
+      let a = Math.floor(Math.random() * 19) + 2;
+      let b = Math.floor(Math.random() * 19) + 2;
+      if (op === '/') { a = a * b; }
+      const question = `${a} ${op} ${b} = ?`;
+      let answer;
+      switch(op) {
+        case '+': answer = a + b; break;
+        case '-': answer = a - b; break;
+        case '*': answer = a * b; break;
+        case '/': answer = Math.floor(a / b); break;
+      }
+      return { question, answer };
+    }
+
+    function makeLinearEquation() {
+      const a = Math.floor(Math.random() * 10) + 1;
+      const x = Math.floor(Math.random() * 21) - 10;
+      const b = Math.floor(Math.random() * 21) - 10;
+      const c = a * x + b;
+      const question = `${a}x + (${b}) = ${c}; x = ?`;
+      return { question, answer: x };
+    }
+
+    // 200 soru havuzu
+    function generatePool(n = 200) {
+      const pool = [];
+      const set = new Set();
+      while (pool.length < n) {
+        const gen = (Math.random() < 0.5) ? makeArithQuestion() : makeLinearEquation();
+        if (!set.has(gen.question)) {
+          set.add(gen.question);
+          pool.push(gen);
+        }
+      }
+      return pool;
+    }
+
+    // Oyun verileri
+    const pool = generatePool();
+    let correct = 0;
+    let wrong = 0;
+    const asked = new Set();
+
+    const hangmanImg = document.getElementById('hangman-img');
+    const questionDiv = document.getElementById('question');
+    const statusDiv = document.getElementById('status');
+    const messageDiv = document.getElementById('message');
+    const answerInput = document.getElementById('answer');
+    const submitBtn = document.getElementById('submit-btn');
+
+    function updateDisplay() {
+      // Önder Hoca resmi yanlış cevap sayısına göre opaklaştırılıyor
+      const maxWrong = 6;
+      const opacity = Math.min(1, wrong / maxWrong);
+      hangmanImg.style.opacity = opacity;
+      statusDiv.textContent = `Doğru: ${correct} / 10   Yanlış: ${wrong} / ${maxWrong}`;
+    }
+
+    function nextQuestion() {
+      if (correct >= 10) {
+        questionDiv.textContent = '';
+        messageDiv.textContent = 'Kazandın! Tebrikler, Önder Hoca da 100 Verecek 🙂';
+        submitBtn.disabled = true;
+        return;
+      }
+      if (wrong >= 6) {
+        questionDiv.textContent = '';
+        messageDiv.textContent = 'Kaybettin Üzgünüm Beni De Üzme 100 Ver';
+        submitBtn.disabled = true;
+        return;
+      }
+      let idx;
+      do { idx = Math.floor(Math.random() * pool.length); } while (asked.has(idx));
+      asked.add(idx);
+      const q = pool[idx];
+      questionDiv.textContent = q.question;
+      return q;
+    }
+
+    let current = nextQuestion();
+    updateDisplay();
+
+    submitBtn.addEventListener('click', () => {
+      const userAns = parseInt(answerInput.value, 10);
+      answerInput.value = '';
+      if (isNaN(userAns)) return;
+      if (userAns === current.answer) {
+        correct++;
+      } else {
+        wrong++;
+      }
+      updateDisplay();
+      current = nextQuestion();
+    });
+  </script>
+</body>
+</html>
